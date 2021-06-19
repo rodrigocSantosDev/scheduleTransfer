@@ -13,8 +13,7 @@ Mockito       	  - Auxiliador nos testes unitários no controle de Mocks.
 
 Banco H2      	  - Banco em memória utilizado para armazenamento das informações de forma mais fácil e rápidas sem a necessidade de uma base de dados "fisíca".
 
-Swagger 2.9.2 	  - Utilizado para documentar/descrever a API de uma forma que informe os tipos e exemplos de request
-
+Swagger 2.9.2 	  - Utilizado para documentar/descrever a API de uma forma que informe os tipos e exemplos de request.
 					Outro ponto implementado para realizar as requisições diretamente pela "interface" swagger.
 					
 ##Montagem do ambiente##
@@ -24,7 +23,9 @@ Swagger 2.9.2 	  - Utilizado para documentar/descrever a API de uma forma que in
 > Instalar Maven  (configurar variáveis de ambiente)
 
 > Baixar projeto
+
 	Opções:
+	
 	Download zip
 	
 	Instalar git
@@ -43,7 +44,7 @@ Swagger 2.9.2 	  - Utilizado para documentar/descrever a API de uma forma que in
 
 		Sugestões: Eclipse e IntelliJ
 
-> Fazer requisições nos endPoints 
+> Fazer requisições nos endPoints
 
 	Sugestões: Acessar Swagger para ver os endPoints e simular chamadas ou fazer as requisições via postman.	
 					
@@ -51,7 +52,6 @@ Swagger 2.9.2 	  - Utilizado para documentar/descrever a API de uma forma que in
 > localhost:8080/swagger-ui.html - Swagger.
 
 > localhost:8080/h2 - Acesso ao Banco H2 (url: jdbc:h2:mem:schedulingTransfer, username:sa, password:password).
-
 					Password exposta por se tratar de uma api que acessa banco em memória e execução local.
 					
 >localhost:8080/cvc/transfer
