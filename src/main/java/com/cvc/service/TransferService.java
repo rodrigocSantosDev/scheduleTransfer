@@ -3,7 +3,9 @@ package com.cvc.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,22 +28,25 @@ public class TransferService {
 	private TransferRepository repository;
 	
 	public RequestStatus transfer(TransferModel transfer) {
+		try {
+			transfer.setSchedulingDate(LocalDate.now());
+			RequestStatus resquestStatus = validateRules(transfer);
+			
+			if(resquestStatus != null) {
+				return resquestStatus;
+			}
+			
+			calculateRates(transfer);
+			
+			if (transfer.getRate() == null || transfer.getRate().compareTo(BigDecimal.ZERO) == 0) {
+				logger.error("No rate were found for the transfer request made. Request date: {} - requisition data: {}", LocalDate.now(), transfer);
+				return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), "An internal error has occurred, please try again later.");
+			}
 		
-		transfer.setSchedulingDate(LocalDate.now());
-		RequestStatus resquestStatus = validateRules(transfer);
-		
-		if(resquestStatus != null) {
-			return resquestStatus;
+		} catch (DateTimeParseException e) {
+			logger.error("Error in setting the date.", e);
+			return new RequestStatus(HttpStatus.BAD_REQUEST.value(), "Error in setting the date. Expected format: yyyy-mm-dd");
 		}
-		
-		calculateRates(transfer);
-		
-		if (transfer.getRate() == null || transfer.getRate().compareTo(BigDecimal.ZERO) == 0) {
-			logger.error("No rate were found for the transfer request made. Request date: {} - requisition data: {}", LocalDate.now(), transfer);
-			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), "An internal error has occurred, please try again later.");
-		}
-		
-		
 		repository.save(transfer);
 		
 		return new RequestStatus(HttpStatus.OK.value(), "Transfer Successfully. Rate charged from: "+ transfer.getRate().setScale(2,BigDecimal.ROUND_HALF_EVEN));
@@ -52,7 +57,7 @@ public class TransferService {
 		
 		if(transfer.getValue().compareTo(new BigDecimal(0)) <= 0) {
 			logger.info("Process closed, it is necessary to inform a valid value.");
-			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), "It is necessary to enter a valid value");
+			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), "It is necessary to enter a valid value. Greater than zero");
 		}
 		
 		RequestStatus requestStatus = validateAccountSize(transfer);
@@ -122,7 +127,12 @@ public class TransferService {
 	}
 
 	public Iterable<TransferModel> findBySchedulingDate(String schedulingDate) {
-		return repository.findBySchedulingDate(Util.convertStringToLocalDate(schedulingDate));
+		try {
+			return repository.findBySchedulingDate(Util.convertStringToLocalDate(schedulingDate));
+		} catch (DateTimeParseException e) {
+			logger.error("Error in setting the date.", e);
+			return new ArrayList<>();
+		}
 	}
 	
 	public Iterable<TransferModel> findByTransferDate(String transferDate) {

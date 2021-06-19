@@ -19,7 +19,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 @ApiIgnore
 @Api(hidden = true)
-@Entity
+@Entity(name = "Trasnfer")
 public class TransferModel {
 	
 	@JsonIgnore
