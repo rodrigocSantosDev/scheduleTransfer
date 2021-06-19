@@ -32,15 +32,15 @@ public class TransferResource {
 	}
 	
 	@ApiResponses(value = {
-		    @ApiResponse(code = 200, message = "ransfer scheduling successful"),
+		    @ApiResponse(code = 200, message = "Transfer scheduling successful"),
 		    @ApiResponse(code = 412, message = "any rule was not met"),
 		    @ApiResponse(code = 500, message = "An exception was generated"),
 		})
 	@PostMapping(value = "/transfer", produces="application/json", consumes="application/json")
-	public RequestStatus transfer(@RequestBody TransferModel transferencia) {
+	public RequestStatus transfer(@RequestBody TransferModel transferModel) {
 		LOGGER.info("START PROCESSING SAVE TRANSFER");
 		
-		return service.scheduleTransfer(transferencia);
+		return service.scheduleTransfer(transferModel);
 	}
 	
 	@ApiResponses(value = {
