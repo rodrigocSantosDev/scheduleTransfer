@@ -11,7 +11,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.sun.istack.NotNull;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
@@ -19,7 +18,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 @ApiIgnore
 @Api(hidden = true)
-@Entity(name = "Trasnfer")
+@Entity(name = "transfer")
 public class TransferModel {
 	
 	@JsonIgnore
@@ -31,37 +30,31 @@ public class TransferModel {
 	
 	@ApiModelProperty(position = 1)
 	@Basic(optional = false)
-    @NotNull
     @Column(name = "originAccount", nullable = false)
 	private String originAccount;
 	
 	@ApiModelProperty(position = 2)
 	@Basic(optional = false)
-    @NotNull
     @Column(name = "destinationAccount", nullable = false)
 	private String destinationAccount;
 	
 	@JsonIgnore
 	@Basic(optional = false)
-    @NotNull
     @Column(name = "rate", nullable = false)
 	private BigDecimal rate;
 	
 	@ApiModelProperty(position = 4)
 	@Basic(optional = false)
-    @NotNull
     @Column(name = "value", nullable = false)
 	private BigDecimal value;
 	
 	@ApiModelProperty(position = 3)
 	@Basic(optional = false)
-    @NotNull
     @Column(name = "dtTransfer", nullable = false)
 	private String transferDate;
 	
 	@JsonIgnore
 	@Basic(optional = false)
-    @NotNull
     @Column(name = "dtScheduling", nullable = false)
 	private LocalDate schedulingDate;
 	

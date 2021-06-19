@@ -37,10 +37,10 @@ public class TransferResource {
 		    @ApiResponse(code = 500, message = "An exception was generated"),
 		})
 	@PostMapping(value = "/transfer", produces="application/json", consumes="application/json")
-	public RequestStatus tranfer(@RequestBody TransferModel transferencia) {
+	public RequestStatus transfer(@RequestBody TransferModel transferencia) {
 		LOGGER.info("START PROCESSING SAVE TRANSFER");
 		
-		return service.transfer(transferencia);
+		return service.scheduleTransfer(transferencia);
 	}
 	
 	@ApiResponses(value = {
@@ -52,7 +52,7 @@ public class TransferResource {
 	public Iterable<TransferModel> findAll() {
 		LOGGER.info("START PROCESSING FIND ALL TRANSFER");
 		
-		return service.findTransfer();
+		return service.findAll();
 	}
 	
 	@ApiResponses(value = {

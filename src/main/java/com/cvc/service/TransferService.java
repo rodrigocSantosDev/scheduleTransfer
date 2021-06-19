@@ -13,11 +13,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.cvc.enums.EMessage;
 import com.cvc.model.RequestStatus;
 import com.cvc.model.TransferModel;
 import com.cvc.repository.TransferRepository;
-import com.cvc.util.Util;
 
+/**
+ * Service responsible for controlling transfer scheduling.
+ * @author rodrigoSantos
+ *
+ */
 @Service
 public class TransferService {
 
@@ -27,7 +32,12 @@ public class TransferService {
 	@Autowired
 	private TransferRepository repository;
 	
-	public RequestStatus transfer(TransferModel transfer) {
+	/**
+	 * Schedule Transfer
+	 * @param transfer
+	 * @return RequestStatus. Returns success and error codes in a simpler and more controlled way.
+	 */
+	public RequestStatus scheduleTransfer(TransferModel transfer) {
 		try {
 			transfer.setSchedulingDate(LocalDate.now());
 			RequestStatus resquestStatus = validateRules(transfer);
@@ -38,26 +48,33 @@ public class TransferService {
 			
 			calculateRates(transfer);
 			
+			//No rates were applied, the system is not prepared for the requested scheduling type.
 			if (transfer.getRate() == null || transfer.getRate().compareTo(BigDecimal.ZERO) == 0) {
-				logger.error("No rate were found for the transfer request made. Request date: {} - requisition data: {}", LocalDate.now(), transfer);
-				return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), "An internal error has occurred, please try again later.");
+				logger.error(EMessage.WITHOUT_RATE.getValue(), LocalDate.now(), transfer);
+				return new RequestStatus(HttpStatus.INTERNAL_SERVER_ERROR.value(), EMessage.INTERNAL_ERROR.getValue());
 			}
 		
+		//Catch exception, logger in console but return something simpler and more understandable.
 		} catch (DateTimeParseException e) {
-			logger.error("Error in setting the date.", e);
-			return new RequestStatus(HttpStatus.BAD_REQUEST.value(), "Error in setting the date. Expected format: yyyy-mm-dd");
+			logger.error(EMessage.SETTING_DATE_ERROR.getValue(), e);
+			return new RequestStatus(HttpStatus.BAD_REQUEST.value(), EMessage.SETTING_DATE_ERROR.getValue());
 		}
 		repository.save(transfer);
 		
-		return new RequestStatus(HttpStatus.OK.value(), "Transfer Successfully. Rate charged from: "+ transfer.getRate().setScale(2,BigDecimal.ROUND_HALF_EVEN));
+		return new RequestStatus(HttpStatus.OK.value(), EMessage.SUCESSO.getValue() + transfer.getRate().setScale(2,BigDecimal.ROUND_HALF_EVEN));
 	}
 
 
+	/**
+	 * Validate requisition rules.
+	 * @param transfer
+	 * @return RequestStatus. Returns success and error codes in a simpler and more controlled way.
+	 */
 	private RequestStatus validateRules(TransferModel transfer) {
 		
 		if(transfer.getValue().compareTo(new BigDecimal(0)) <= 0) {
-			logger.info("Process closed, it is necessary to inform a valid value.");
-			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), "It is necessary to enter a valid value. Greater than zero");
+			logger.info(EMessage.VALUE_ERROR.getValue());
+			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), EMessage.VALUE_ERROR.getValue());
 		}
 		
 		RequestStatus requestStatus = validateAccountSize(transfer);
@@ -69,8 +86,12 @@ public class TransferService {
 		return requestStatus;
 	}
 	
+	/**
+	 * Calculation of rates according to the number of days of the transfer date and value.
+	 * @param transfer
+	 */
 	private void calculateRates(TransferModel transfer) {
-		LocalDate transferDate = Util.convertStringToLocalDate(transfer.getTransferDate()); 
+		LocalDate transferDate = LocalDate.parse(transfer.getTransferDate()); 
 		long differenceDays = ChronoUnit.DAYS.between(transfer.getSchedulingDate(), transferDate);
 		
 		if(transfer.getSchedulingDate().format(formatter).equals(transferDate.format(formatter))) {
@@ -81,6 +102,11 @@ public class TransferService {
 		}
 	}
 
+	/**
+	 * Set rates according to day rules.
+	 * @param transfer
+	 * @param differenceInDays
+	 */
 	private void calculareRatesPerDay(TransferModel transfer, long differenceInDays) {
 		if (differenceInDays <= 10) {
 			transfer.setRate(new BigDecimal(12).multiply(new BigDecimal(differenceInDays)));
@@ -95,46 +121,73 @@ public class TransferService {
 		}
 	}
 
+	/**
+	 * Set rates according to percentage rules.
+	 * @param transfer
+	 * @param rate
+	 * @param percentage
+	 */
 	private void calculateRateWithPercentageOnValue(TransferModel transfer, BigDecimal rate, double percentage) {
-		percentage = percentage / 100d;
+		percentage = percentage / 100f;
 		transfer.setRate(transfer.getValue().multiply(BigDecimal.valueOf(percentage)).add(rate));
 	}
 
+	/**
+	 * Validate transfer date
+	 * @param transfer
+	 * @return
+	 */
 	private RequestStatus validateTransferDate(TransferModel transfer) {
-		LocalDate transferDate = Util.convertStringToLocalDate(transfer.getTransferDate());
-		if(transfer.getTransferDate() == null) {
-			logger.info("Process closed due to failure in the criteria in which the transfer date was not informed");
-			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), "Transfer date is mandatory");
-		}else if(transferDate.isBefore(transfer.getSchedulingDate())) {
-			logger.info("Process closed due to failure in criteria where the transfer date is before the current date");
-			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), "Transfer date cannot be earlier than current date");
+		LocalDate transferDate = LocalDate.parse(transfer.getTransferDate());
+		if(transferDate.isBefore(transfer.getSchedulingDate())) {
+			logger.info(EMessage.PROCESS_CLOSED_RULE_DATE.getValue());
+			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), EMessage.DATE_LESS_THAN_CURRENT.getValue());
 		}
 		return null;
 	}
 
+	/**
+	 * Validate size of origin account and destination account.
+	 * @param transfer
+	 * @return
+	 */
 	private RequestStatus validateAccountSize(TransferModel transfer) {
 		
 		if(transfer.getOriginAccount().length() != 6 || transfer.getDestinationAccount().length() !=6) {
-			logger.info("Process was terminated due to failure in the 6-digit criteria of the source and/or destination account");
-			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), "The size of source account and destination account must be 6");
+			logger.info(EMessage.PROCESS_TERMINATED_INVALID_ACCOUNT.getValue());
+			return new RequestStatus(HttpStatus.PRECONDITION_FAILED.value(), EMessage.SIZE_ACCOUNT_INVALID.getValue());
 		}
 		
 		return null;
 	}
 
-	public Iterable<TransferModel> findTransfer() {
+	/**
+	 * Search all registered schedulings.
+	 * @return
+	 */
+	public Iterable<TransferModel> findAll() {
 		return repository.findAll();
 	}
 
+	/**
+	 * Search registered schedulings filtered by schedulingDate.
+	 * @param schedulingDate
+	 * @return
+	 */
 	public Iterable<TransferModel> findBySchedulingDate(String schedulingDate) {
 		try {
-			return repository.findBySchedulingDate(Util.convertStringToLocalDate(schedulingDate));
+			return repository.findBySchedulingDate(LocalDate.parse(schedulingDate));
 		} catch (DateTimeParseException e) {
-			logger.error("Error in setting the date.", e);
+			logger.error(EMessage.SETTING_DATE_ERROR.getValue(), e);
 			return new ArrayList<>();
 		}
 	}
 	
+	/**
+	 * Search registered schedulings filtered by transferDate.
+	 * @param transferDate
+	 * @return
+	 */
 	public Iterable<TransferModel> findByTransferDate(String transferDate) {
 		return repository.findByTransferDate(transferDate);
 	}
