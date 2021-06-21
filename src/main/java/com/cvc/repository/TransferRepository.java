@@ -1,6 +1,7 @@
 package com.cvc.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -10,8 +11,10 @@ import com.cvc.model.TransferModel;
 @Repository
 public interface TransferRepository extends CrudRepository<TransferModel, Integer> {
 
-	Iterable<TransferModel> findBySchedulingDate(LocalDate schedulingDate);
+	List<TransferModel> findAll();
 	
-	Iterable<TransferModel> findByTransferDate(String transferDate);
+	List<TransferModel> findBySchedulingDate(LocalDate schedulingDate);
+	
+	List<TransferModel> findByTransferDate(String transferDate);
 	
 }

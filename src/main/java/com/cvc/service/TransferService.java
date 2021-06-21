@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.cvc.dto.TransferDTO;
 import com.cvc.enums.EMessage;
 import com.cvc.model.RequestStatus;
 import com.cvc.model.TransferModel;
@@ -29,8 +31,12 @@ public class TransferService {
 	private static final Logger logger = LoggerFactory.getLogger(TransferService.class);
 	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); 
 	
+	TransferRepository repository;
+	
 	@Autowired
-	private TransferRepository repository;
+	public TransferService(TransferRepository repository) {
+		this.repository = repository;
+	}
 	
 	/**
 	 * Schedule Transfer
@@ -165,8 +171,13 @@ public class TransferService {
 	 * Search all registered schedulings.
 	 * @return
 	 */
-	public Iterable<TransferModel> findAll() {
-		return repository.findAll();
+	public List<TransferDTO> findAll() {
+		List<TransferDTO> listDto = new ArrayList<>();
+
+		List<TransferModel> listTransfer = repository.findAll();
+		listTransfer.stream().forEach(t -> listDto.add(t.convertEntityToDTO()));
+		
+		return listDto;
 	}
 
 	/**
@@ -174,9 +185,15 @@ public class TransferService {
 	 * @param schedulingDate
 	 * @return
 	 */
-	public Iterable<TransferModel> findBySchedulingDate(String schedulingDate) {
+	public List<TransferDTO> findBySchedulingDate(String schedulingDate) {
 		try {
-			return repository.findBySchedulingDate(LocalDate.parse(schedulingDate));
+			List<TransferDTO> listDto = new ArrayList<>();
+			
+			List<TransferModel> listTransfer = repository.findBySchedulingDate(LocalDate.parse(schedulingDate));
+			listTransfer.stream().forEach(t -> listDto.add(t.convertEntityToDTO()));
+			
+			return listDto;
+			
 		} catch (DateTimeParseException e) {
 			logger.error(EMessage.SETTING_DATE_ERROR.getValue(), e);
 			return new ArrayList<>();
@@ -188,8 +205,15 @@ public class TransferService {
 	 * @param transferDate
 	 * @return
 	 */
-	public Iterable<TransferModel> findByTransferDate(String transferDate) {
-		return repository.findByTransferDate(transferDate);
+	public List<TransferDTO> findByTransferDate(String transferDate) {
+		
+		List<TransferDTO> listDto = new ArrayList<>();
+		
+		List<TransferModel> listTransfer = repository.findByTransferDate(transferDate);
+		listTransfer.stream().forEach(t -> listDto.add(t.convertEntityToDTO()));
+		
+		return listDto;
+		
 	}
 	
 }

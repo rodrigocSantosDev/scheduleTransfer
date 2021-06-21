@@ -127,7 +127,7 @@ public class TransferServiceTest {
 		listModel.add(model);
 		Mockito.when(repository.findAll()).thenReturn(listModel);
 
-		assertEquals(listModel,service.findAll());
+		assertTrue(!service.findAll().isEmpty());
 	}
 	
 	@DisplayName("List transfers by scheduling Date")
@@ -140,7 +140,7 @@ public class TransferServiceTest {
 		
 		Mockito.when(repository.findBySchedulingDate(LocalDate.parse(schedulingDate))).thenReturn(listModel);
 
-		assertEquals(listModel,service.findBySchedulingDate(schedulingDate));
+		assertTrue(!service.findBySchedulingDate(schedulingDate).isEmpty());
 	}
 	
 	@DisplayName("List transfers by scheduling Date - DateTimeParseException")
@@ -160,7 +160,7 @@ public class TransferServiceTest {
 		
 		Mockito.when(repository.findByTransferDate(model.getTransferDate())).thenReturn(listModel);
 
-		assertEquals(listModel,service.findByTransferDate(model.getTransferDate()));
+		assertTrue(!service.findByTransferDate(model.getTransferDate()).isEmpty());
 	}
 	
 	private TransferModel loadModel() {

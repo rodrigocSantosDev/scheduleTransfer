@@ -1,5 +1,7 @@
 package com.cvc.resources;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.cvc.dto.TransferDTO;
 import com.cvc.model.RequestStatus;
-import com.cvc.model.TransferModel;
 import com.cvc.service.TransferService;
 
 import io.swagger.annotations.ApiResponse;
@@ -24,8 +26,12 @@ public class TransferResource {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(TransferResource.class);
 
+	TransferService service;
+	
 	@Autowired
-	private TransferService service;
+	public TransferResource(TransferService service) {
+		this.service = service;
+	}
 	
 	public TransferResource() {
 		super();
@@ -37,10 +43,10 @@ public class TransferResource {
 		    @ApiResponse(code = 500, message = "An exception was generated"),
 		})
 	@PostMapping(value = "/transfer", produces="application/json", consumes="application/json")
-	public RequestStatus transfer(@RequestBody TransferModel transferModel) {
+	public RequestStatus transfer(@RequestBody TransferDTO dto) {
 		LOGGER.info("START PROCESSING SAVE TRANSFER");
 		
-		return service.scheduleTransfer(transferModel);
+		return service.scheduleTransfer(dto.convertDTOToEntity());
 	}
 	
 	@ApiResponses(value = {
@@ -49,7 +55,7 @@ public class TransferResource {
 	    @ApiResponse(code = 500, message = "An exception was generated"),
 	})
 	@GetMapping(value = "/findAll", produces="application/json")
-	public Iterable<TransferModel> findAll() {
+	public List<TransferDTO> findAll() {
 		LOGGER.info("START PROCESSING FIND ALL TRANSFER");
 		
 		return service.findAll();
@@ -61,7 +67,7 @@ public class TransferResource {
 		    @ApiResponse(code = 500, message = "An exception was generated"),
 		})
 	@GetMapping(value = "/findBySchedulingDate/{date}", produces="application/json")
-	public Iterable<TransferModel> findBySchedulingDate(@PathVariable("date") String schedulingDate) {
+	public List<TransferDTO> findBySchedulingDate(@PathVariable("date") String schedulingDate) {
 		LOGGER.info("START PROCESSING FIND SCHEDULING DATE TRANSFER");
 		
 		return service.findBySchedulingDate(schedulingDate);
@@ -73,7 +79,7 @@ public class TransferResource {
 		    @ApiResponse(code = 500, message = "An exception was generated"),
 		})
 	@GetMapping(value = "/findByTransferDate/{date}", produces="application/json")
-	public Iterable<TransferModel> findByTransferDate(@PathVariable("date") String transferDate) {
+	public List<TransferDTO> findByTransferDate(@PathVariable("date") String transferDate) {
 		LOGGER.info("START PROCESSING FIND TRANSFER DATE TRANSFER");
 		
 		return service.findByTransferDate(transferDate);
